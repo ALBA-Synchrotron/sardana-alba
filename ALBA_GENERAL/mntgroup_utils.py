@@ -1,7 +1,4 @@
-import time
 from sardana.macroserver.macro import *
-from sardana.util.tree import BranchNode, LeafNode, Tree
-import taurus
 
 class select_mntGrp(Macro):
     param_def = [
