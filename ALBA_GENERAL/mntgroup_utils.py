@@ -1,29 +1,78 @@
+import time
+
 from sardana.macroserver.macro import Macro, Type, ParamRepeat
 
 
-def filterMntChannels(mntGrp, channelsList):
-    # Check if the channels exit in the mntGrp
-    elements = mntGrp.getCounterNames()
-    chs = []
-    chs_to_skip = []
-    for ch in channelsList:
-        # check if exit in the mntGrp
-        if ch.name in elements:
-            # list of channels to config
-            chs.append(ch.name)
-        else:
-            # list of channels skipped
-            chs_to_skip.append(ch.name)
-    return chs, chs_to_skip
+class MGManager(object):
+    """
+    Class to manages the measurement group
+    """
 
+    def __init__(self, macro_obj, mnt_grp, channels=None):
+        self.macro = macro_obj
+        self.mnt_grp = mnt_grp
+        self.__filterMntChannels(channels)
 
-class select_mntGrp(Macro):
-    param_def = [
-       ['mntGrp', Type.MeasurementGroup, None, 'mntGroup name']]
+    def __filterMntChannels(self, channels):
+        # Check if the channels exit in the mntGrp
+        self.all_channels_names = self.mnt_grp.getCounterNames()
+        if channels is None:
+            return
+        channels_names = []
+        for channel in channels:
+            if isinstance(channel, str):
+                channel_name = channel
+            else:
+                channel_name = channel.name
 
-    def run(self, mntGrp):
-        self.setEnv('ActiveMntGrp', str(mntGrp))
-        self.info("Active Measurement Group : %s" % str(mntGrp))
+            if channel_name in self.all_channels_names:
+                channels_names.append(channel_name)
+            else:
+                msg = 'The channel {0} is not in {1}'.format(channel_name,
+                                                             self.mnt_grp)
+                self.macro.warning(msg)
+        self.channels_names = channels_names
+
+    def enable_channels(self):
+        self.mnt_grp.enableChannels(self.channels_names)
+        self.macro.output('Channels enabled')
+
+    def enable_only_channels(self):
+        self.mnt_grp.disableChannels(self.all_channels_names)
+        time.sleep(0.2)
+        self.mnt_grp.enableChannels(self.channels_names)
+        self.macro.output('Enabled only the selected channels')
+
+    def disable_channels(self):
+        self.mnt_grp.disableChannels(self.channels_names)
+        self.macro.output('Channels disabled')
+
+    def disable_only_channels(self):
+        self.mnt_grp.enableChannels(self.all_channels_names)
+        time.sleep(0.2)
+        self.mnt_grp.disableChannels(self.channels_names)
+        self.macro.output('Disable only the selected channels')
+
+    def enable_all(self):
+        self.mnt_grp.enableChannels(self.all_channels_names)
+        self.macro.output('Enable all the channels')
+
+    def disable_all(self):
+        self.mnt_grp.disableChannels(self.all_channels_names)
+        self.macro.output('Disabled all the channels')
+
+    def status(self):
+        out_line = '{0:<15} {1:^10} {2:^10} {3:^10} {4:^10}'
+        self.macro.output(out_line.format('Channel', 'Enabled', 'Plot_type',
+                                          'Plot axes', 'Output'))
+        for channel in self.mnt_grp.getChannels():
+            name = channel['name']
+            enabled = ['False', 'True'][channel['enabled']]
+            plot_type = ['No', 'Spectrum', 'Image'][channel['plot_type']]
+            plot_axis = channel['plot_axes']
+            output = ['False', 'True'][channel['output']]
+            self.macro.output(out_line.format(name, enabled, plot_type,
+                                              plot_axis, output))
 
 
 class meas_enable_ch(Macro):
@@ -36,43 +85,74 @@ class meas_enable_ch(Macro):
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
         ['ChannelState',
-         ParamRepeat(['channel', Type.CTExpChannel, None, 'Channel to change '
-                                                          'state'], min=1),
+         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
+                                                        'state'], min=1),
          None, 'List of channels to Enable'],
     ]
 
     def run(self, mntGrp, channels):
-        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp,
-                                           channelsList=channels)
-        mntGrp.enableChannels(ch)
-        self.info("Enabled %r channels in %r" % (ch, str(mntGrp)))
-        if len(ch_to_skip) > 0:
-            msg = "Skipped %r, not founds in %r" % (ch_to_skip, str(mntGrp))
-            self.warning(msg)
+        mg_manager = MGManager(self, mntGrp, channels)
+        mg_manager.enable_channels()
 
 
-class meas_disable_ch(Macro):
+class meas_enable_ch_only(Macro):
     """
-    Disable the Counter Timers selected
+    Enable the Counter Timers selected
+
     """
 
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState', ParamRepeat(['channel', Type.CTExpChannel, None,
-                                      'Channel to change state'], min=1),
-         None, 'List of channels to Disable'],
+        ['ChannelState',
+         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
+                                                        'state'], min=1),
+         None, 'List of channels to Enable'],
     ]
 
     def run(self, mntGrp, channels):
+        mg_manager = MGManager(self, mntGrp, channels)
+        mg_manager.enable_only_channels()
 
-        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp,
-                                           channelsList=channels)
-        mntGrp.disableChannels(ch)
-        self.info("Disabled %r channels in %r" % (ch, str(mntGrp)))
-        if len(ch_to_skip) > 0:
-            msg = "Skipped %r, not founds in %r" % (ch_to_skip, str(mntGrp))
-            self.warning(msg)
+
+class meas_disable_ch(Macro):
+    """
+    Enable the Counter Timers selected
+
+    """
+
+    param_def = [
+        ['MeasurementGroup', Type.MeasurementGroup, None,
+         "Measurement Group to work"],
+        ['ChannelState',
+         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
+                                                        'state'], min=1),
+         None, 'List of channels to Enable'],
+    ]
+
+    def run(self, mntGrp, channels):
+        mg_manager = MGManager(self, mntGrp, channels)
+        mg_manager.disable_channels()
+
+
+class meas_disable_ch_only(Macro):
+    """
+    Enable the Counter Timers selected
+
+    """
+
+    param_def = [
+        ['MeasurementGroup', Type.MeasurementGroup, None,
+         "Measurement Group to work"],
+        ['ChannelState',
+         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
+                                                        'state'], min=1),
+         None, 'List of channels to Enable'],
+    ]
+
+    def run(self, mntGrp, channels):
+        mg_manager = MGManager(self, mntGrp, channels)
+        mg_manager.disable_only_channels()
 
 
 class meas_enable_all(Macro):
@@ -84,23 +164,21 @@ class meas_enable_all(Macro):
         ['MeasurementGroup', Type.MeasurementGroup, None, "Measurement"], ]
 
     def run(self, mntGrp):
-        elem = mntGrp.getCounterNames()
-        mntGrp.enableChannels(elem)
-        self.info("Enabled %r channels in %r" % (elem, str(mntGrp)))
+        mg_manager = MGManager(self, mntGrp)
+        mg_manager.enable_all()
 
 
 class meas_disable_all(Macro):
     """
-    Disable all counter channels of the measurement Group
+    Enable all counter channels of the measurement group
     """
 
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None, "Measurement"], ]
 
     def run(self, mntGrp):
-        elem = mntGrp.getCounterNames()
-        mntGrp.disableChannels(elem)
-        self.info("Disabled %r channels in %r" % (elem, str(mntGrp)))
+        mg_manager = MGManager(self, mntGrp)
+        mg_manager.disable_all()
 
 
 class meas_status(Macro):
@@ -109,19 +187,17 @@ class meas_status(Macro):
     if the parameter is empty it shows the state of the ActiveMeasurementGroup
     """
     param_def = [
-        ['MeasurementGroup', Type.MeasurementGroup, None, "mntGrp Name"],
-    ]
+        ['MeasurementGroup', Type.MeasurementGroup, None, "Measurement"], ]
 
     def run(self, mntGrp):
-        if mntGrp is None:
-            self.info('entering')
-            mntGrp = self.getEnv('ActiveMntGrp')
-            mntGrp = self.getObj(mntGrp, type_class=Type.MeasurementGroup)
-            self.info(
-                "No measurement Group given so take active one %s" % mntGrp)
-        val = 'Channel', 'Enabled', 'Plot_type', 'Plot axes', 'Output'
-        self.warning("%10s %10s %10s %10s %10s" % val)
-        for channel in mntGrp.getChannels():
-            val = (channel['name'], channel['enabled'], channel['plot_type'],
-                   channel['plot_axes'], channel['output'])
-            self.warning("%10s %10s %10s %10s %10s" % val)
+        mg_manager = MGManager(self, mntGrp)
+        mg_manager.status()
+
+
+class select_mntGrp(Macro):
+    param_def = [
+       ['mntGrp', Type.MeasurementGroup, None, 'mntGroup name']]
+
+    def run(self, mntGrp):
+        self.setEnv('ActiveMntGrp', str(mntGrp))
+        self.info("Active Measurement Group : %s" % str(mntGrp))
