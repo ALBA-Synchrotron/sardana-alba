@@ -1,11 +1,4 @@
-from sardana.macroserver.macro import *
-
-class select_mntGrp(Macro):
-    param_def = [
-       ['mntGrp', Type.MeasurementGroup, None, 'mntGroup name']]
-    def run(self, mntGrp):
-        self.setEnv('ActiveMntGrp', str(mntGrp))
-        self.info("Active Measurement Group : %s" %str(mntGrp))
+from sardana.macroserver.macro import Macro, Type, ParamRepeat
 
 
 def filterMntChannels(mntGrp, channelsList):
@@ -24,6 +17,15 @@ def filterMntChannels(mntGrp, channelsList):
     return chs, chs_to_skip
 
 
+class select_mntGrp(Macro):
+    param_def = [
+       ['mntGrp', Type.MeasurementGroup, None, 'mntGroup name']]
+
+    def run(self, mntGrp):
+        self.setEnv('ActiveMntGrp', str(mntGrp))
+        self.info("Active Measurement Group : %s" % str(mntGrp))
+
+
 class meas_enable_ch(Macro):
     """
     Enable the Counter Timers selected
@@ -40,7 +42,8 @@ class meas_enable_ch(Macro):
     ]
 
     def run(self, mntGrp, channels):
-        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp, channelsList=channels)
+        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp,
+                                           channelsList=channels)
         mntGrp.enableChannels(ch)
         self.info("Enabled %r channels in %r" % (ch, str(mntGrp)))
         if len(ch_to_skip) > 0:
@@ -56,15 +59,15 @@ class meas_disable_ch(Macro):
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState',
-         ParamRepeat(['channel', Type.CTExpChannel, None, 'Channel to change '
-                                                          'state'],
-                     min=1),
+        ['ChannelState', ParamRepeat(['channel', Type.CTExpChannel, None,
+                                      'Channel to change state'], min=1),
          None, 'List of channels to Disable'],
     ]
 
     def run(self, mntGrp, channels):
-        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp, channelsList=channels)
+
+        ch, ch_to_skip = filterMntChannels(mntGrp=mntGrp,
+                                           channelsList=channels)
         mntGrp.disableChannels(ch)
         self.info("Disabled %r channels in %r" % (ch, str(mntGrp)))
         if len(ch_to_skip) > 0:
@@ -116,12 +119,9 @@ class meas_status(Macro):
             mntGrp = self.getObj(mntGrp, type_class=Type.MeasurementGroup)
             self.info(
                 "No measurement Group given so take active one %s" % mntGrp)
-        cfg = mntGrp.getConfiguration()
         val = 'Channel', 'Enabled', 'Plot_type', 'Plot axes', 'Output'
-        self.warning("%10s %10s %10s %10s %10s" % (val))
+        self.warning("%10s %10s %10s %10s %10s" % val)
         for channel in mntGrp.getChannels():
-            c = channel
             val = (channel['name'], channel['enabled'], channel['plot_type'],
                    channel['plot_axes'], channel['output'])
-            self.warning("%10s %10s %10s %10s %10s" % (val))
-
+            self.warning("%10s %10s %10s %10s %10s" % val)
