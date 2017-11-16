@@ -15,7 +15,7 @@ class MGManager(object):
 
     def __filterMntChannels(self, channels):
         # Check if the channels exit in the mntGrp
-        self.all_channels_names = self.mnt_grp.getCounterNames()
+        self.all_channels_names = self.mnt_grp.getChannelNames()
         if channels is None:
             return
         channels_names = []
