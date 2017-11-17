@@ -38,28 +38,30 @@ class MGManager(object):
         self.macro.output('Channels enabled')
 
     def enable_only_channels(self):
-        self.mnt_grp.disableChannels(self.all_channels_names)
-        time.sleep(0.2)
-        self.mnt_grp.enableChannels(self.channels_names)
+        dis_ch = list(set(self.all_channels_names) - set(self.channels_names))
+        self.disable_only_channels(dis_ch)
         self.macro.output('Enabled only the selected channels')
 
     def disable_channels(self):
         self.mnt_grp.disableChannels(self.channels_names)
         self.macro.output('Channels disabled')
 
-    def disable_only_channels(self):
+    def disable_only_channels(self, dis_ch=None):
         self.mnt_grp.enableChannels(self.all_channels_names)
         time.sleep(0.2)
-        self.mnt_grp.disableChannels(self.channels_names)
+        if dis_ch is None:
+            dis_ch = self.channels_names
+        self.mnt_grp.disableChannels(dis_ch)
         self.macro.output('Disable only the selected channels')
 
     def enable_all(self):
         self.mnt_grp.enableChannels(self.all_channels_names)
         self.macro.output('Enable all the channels')
 
-    def disable_all(self):
-        self.mnt_grp.disableChannels(self.all_channels_names)
-        self.macro.output('Disabled all the channels')
+    # Unsafe to use it
+    # def disable_all(self):
+    #     self.mnt_grp.disableChannels(self.all_channels_names)
+    #     self.macro.output('Disabled all the channels')
 
     def status(self):
         out_line = '{0:<15} {1:^10} {2:^10} {3:^10} {4:^10}'
@@ -167,18 +169,18 @@ class meas_enable_all(Macro):
         mg_manager = MGManager(self, mntGrp)
         mg_manager.enable_all()
 
-
-class meas_disable_all(Macro):
-    """
-    Enable all counter channels of the measurement group
-    """
-
-    param_def = [
-        ['MeasurementGroup', Type.MeasurementGroup, None, "Measurement"], ]
-
-    def run(self, mntGrp):
-        mg_manager = MGManager(self, mntGrp)
-        mg_manager.disable_all()
+# Unsafe macro with the current behaviour of the PoolMeasurementGroup element
+# class meas_disable_all(Macro):
+#     """
+#     Enable all counter channels of the measurement group
+#     """
+#
+#     param_def = [
+#         ['MeasurementGroup', Type.MeasurementGroup, None, "Measurement"], ]
+#
+#     def run(self, mntGrp):
+#         mg_manager = MGManager(self, mntGrp)
+#         mg_manager.disable_all()
 
 
 class meas_status(Macro):
