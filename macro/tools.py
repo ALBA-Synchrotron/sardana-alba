@@ -96,7 +96,7 @@ class PSHU(object):
             self.sh_timeout = self.getEnv('PshuTimeout')
             self.attr = taurus.Attribute(sh_attr_name)
             
-        except Exception, e:
+        except Exception as e:
             msg = ('The macro use the environment variable PshuAttr which has '
                    'the attribute name of the EPS to open the shutter, and the'
                    ' variable PshuTimeout with the timeout in seconds \n%s' % e)
@@ -197,7 +197,7 @@ class FrontEnd(object):
             self.fe_timeout = self.getEnv('FeTimeout')
             self.eps = taurus.Device(eps_name)
 
-        except Exception, e:
+        except Exception as e:
             msg = ('The macro use the environment variable EPSName which has '
                    'the EPS device server name and FeTimeout with the '
                    'timeout to open/close the front end.\n%s' % e)
