@@ -1,5 +1,5 @@
 from sardana.macroserver.macro import macro, Type, Macro
-import ConfigParser
+import configparser
 import time
 import fandango
 import PyTango
@@ -42,7 +42,7 @@ class bkp_sardana(Macro):
             data[type_k][str(pool)] = {}
             properties = pool.get_property(pool.get_property_list('*'))
             data[type_k][str(pool)]['Properties'] = {}
-            for k, v in properties.items():
+            for k, v in list(properties.items()):
                 data[type_k][str(pool)]['Properties'][k] = str(v)
 
         #MacroServer and Doors
@@ -60,7 +60,7 @@ class bkp_sardana(Macro):
             try:
                 #Read Pool Properties
                 properties = ms_dev.get_property(ms_dev.get_property_list('*'))
-                for k, v in properties.items():
+                for k, v in list(properties.items()):
                     data[type_k][str(ms)]['Properties'][k] = str(v)
             except Exception as e:
                 data[type_k][str(ms)]['Properties'] = "ERROR on read"
@@ -72,7 +72,7 @@ class bkp_sardana(Macro):
         data[type_k] = {}
         self.info('\tSaving Environments')
 
-        for env_name, val in environments.items():
+        for env_name, val in list(environments.items()):
             data[type_k][env_name] = {}
             data[type_k][env_name]['Value'] = val
             data[type_k][env_name]['Type'] = repr(type(val))
@@ -95,7 +95,7 @@ class bkp_sardana(Macro):
                   "ComChannel", "IORegister", "TriggerGate", "PseudoMotor", 
                   "PseudoCounter", "MeasurementGroup", "Instrument"]
 
-        for ctrl in ctrls.values():
+        for ctrl in list(ctrls.values()):
             ctrl = ctrl.getObj()
 
             ctrl_name = ctrl.getName()
@@ -105,7 +105,7 @@ class bkp_sardana(Macro):
             properties = ctrl.get_property(ctrl.get_property_list('*'))
             data[type_k][ctrl_name]['Properties'] = {}
 
-            for k, v in properties.items():
+            for k, v in list(properties.items()):
                 data[type_k][ctrl_name]['Properties'][k] = v[0]
 
             data[type_k][ctrl_name]['Elements'] = {}
@@ -124,7 +124,7 @@ class bkp_sardana(Macro):
                     properties = elm.get_property(elm.get_property_list('*'))
                     data[type_k][ctrl_name]['Elements'][str(element)]['Properties'] = {}
 
-                    for k, v in properties.items():
+                    for k, v in list(properties.items()):
                         data[type_k][ctrl_name]['Elements'][str(element)][
                             'Properties'][k] = v[0]
 
@@ -169,7 +169,7 @@ class bkp_sardana(Macro):
             # Measurement Groups Properties
             data[type_k][meas.name]['Properties'] = {}
             properties = meas.get_property(meas.get_property_list('*'))
-            for k, v in properties.items():
+            for k, v in list(properties.items()):
                 data[type_k][meas.name]['Properties'][k] = v[0]
 
         with open(filename, 'w') as f:
@@ -203,7 +203,7 @@ class MntGrpConf(object):
             self.config_file.write(f)
 
     def init_config(self, config_path):
-        self.config_file = ConfigParser.RawConfigParser()
+        self.config_file = configparser.RawConfigParser()
         self.config_file.read(config_path)
         self.config_path = config_path
 
