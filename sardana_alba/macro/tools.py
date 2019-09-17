@@ -1,78 +1,81 @@
 import time
-from sardana.macroserver.macro import * 
-from sardana.util.tree import BranchNode, LeafNode, Tree
+from sardana.macroserver.macro import Macro, Type
 import taurus
 
 
 class dwell(Macro):
-    """This macro waits for a time amount specified by dtime parameter. (python: time.sleep(dtime))"""
-    
+    """
+    This macro waits for a time amount specified by dtime parameter.
+    (python: time.sleep(dtime))
+    """
+
     param_def = [
-       ['dtime', Type.Float, None, 'Dwell time in seconds' ]
+       ['dtime', Type.Float, None, 'Dwell time in seconds']
     ]
-    
+
     def run(self, dtime):
-        while dtime> 0:
+        while dtime > 0:
             self.checkPoint()
-            
+
             if dtime > 1:
                 time.sleep(1)
-                dtime = dtime - 1 
+                dtime = dtime - 1
             else:
                 time.sleep(dtime)
                 dtime = 0
-                
-                
+
+
 class set_user_pos_pm(Macro):
     """
-    This macro set the position of a pseudomotor by changing the offset of its 
-    motors. 
+    This macro set the position of a pseudomotor by changing the offset of its
+    motors.
     """
-    
-    param_def =[['pm', Type.PseudoMotor, None, 'Pseudo motor name' ],
-                ['pos', Type.Float, None, 'Position which will set']]
-    
+
+    param_def = [['pm', Type.PseudoMotor, None, 'Pseudo motor name'],
+                 ['pos', Type.Float, None, 'Position which will set']]
+
     def set_pos(self, moveable, pos):
         moveable_type = moveable.getType()
         if moveable_type == "PseudoMotor":
-            moveables_names = moveable.elements                
+            moveables_names = moveable.elements
             values = moveable.calcphysical(pos)
-            sub_moveables = [(self.getMoveable(name), value) \
+            sub_moveables = [(self.getMoveable(name), value)
                              for name, value in zip(moveables_names, values)]
             for sub_moveable, value in sub_moveables:
                 self.set_pos(sub_moveable, value)
         elif moveable_type == "Motor":
             m = moveable.getName()
-            self.execMacro('set_user_pos %s %f' %(m,pos))
-    
+            self.execMacro('set_user_pos %s %f' % (m, pos))
+
     def run(self, pm, pos):
         self.set_pos(pm, pos)
 
 
-################################################################################
+###############################################################################
 #                   Photon Shutter Macros
-################################################################################
+###############################################################################
 
 class PSHU(object):
     OPEN_VALUE = 1
-    CLOSE_VALUE = 0 
+    CLOSE_VALUE = 0
 
     def initPSHU(self):
         try:
             sh_attr_name = self.getEnv('PshuAttr')
             self.sh_timeout = self.getEnv('PshuTimeout')
             self.attr = taurus.Attribute(sh_attr_name)
-            
+
         except Exception as e:
-            msg = ('The macro use the environment variable PshuAttr which has '
-                   'the attribute name of the EPS to open the shutter, and the'
-                   ' variable PshuTimeout with the timeout in seconds \n%s' % e)
+            msg = 'The macro use the environment variable PshuAttr which ' \
+                  'has the attribute name of the EPS to open the shutter, ' \
+                  'and the variable PshuTimeout with the timeout in seconds ' \
+                  '\n{}'.format(e)
             raise RuntimeError(msg)
-    
+
     @property
     def state(self):
         return self.attr.read().value
-    
+
     def _writeValue(self, value):
         self.attr.write(value)
         t1 = time.time()
@@ -85,7 +88,7 @@ class PSHU(object):
                 raise RuntimeError(msg_to)
             time.sleep(0.1)
             self.checkPoint()
-            
+
     def open(self):
         if self.state:
             self.info('The photon shutter was open')
@@ -93,7 +96,7 @@ class PSHU(object):
         self.info('Opening photon shutter...')
         self._writeValue(self.OPEN_VALUE)
         self.info('The photon shutter is open')
- 
+
     def close(self):
         if not self.state:
             self.info('The photon shutter was closed')
@@ -101,32 +104,34 @@ class PSHU(object):
         self.info('Closing photon shutter...')
         self._writeValue(self.CLOSE_VALUE)
         self.info('The photon shutter is closed')
- 
-    
+
+
 class shopen(Macro, PSHU):
     """
-    This macro open the photon shutter. 
-    
+    This macro open the photon shutter.
+
     Other macros: shclose, shstate
     """
     def run(self):
         self.initPSHU()
         self.open()
 
+
 class shclose(Macro, PSHU):
     """
-    This macro close the photon shutter. 
-    
+    This macro close the photon shutter.
+
     Other macros: shopen, shstate
     """
     def run(self):
         self.initPSHU()
         self.close()
 
+
 class shstate(Macro, PSHU):
     """
-    This macro show the photon shutter state. 
-    
+    This macro show the photon shutter state.
+
     Other macros: shopen, shclose
     """
     def run(self):
@@ -135,13 +140,13 @@ class shstate(Macro, PSHU):
         st_msg = 'closed'
         if state == self.OPEN_VALUE:
             st_msg = 'open'
-            
+
         self.info('The photon shutter is ' + st_msg)
 
 
-################################################################################
+###############################################################################
 #                   Front End Macros
-################################################################################
+###############################################################################
 
 class FrontEnd(object):
     """
@@ -165,9 +170,10 @@ class FrontEnd(object):
             self.eps = taurus.Device(eps_name)
 
         except Exception as e:
-            msg = ('The macro use the environment variable EPSName which has '
-                   'the EPS device server name and FeTimeout with the '
-                   'timeout to open/close the front end.\n%s' % e)
+            msg = 'The macro use the environment variable EPSName which has ' \
+                  'the EPS device server name and FeTimeout with the ' \
+                  'timeout to open/close the front end.' \
+                  '\n{}'.format(e)
             raise RuntimeError(msg)
 
     def is_bl_ready(self):
@@ -226,7 +232,7 @@ class FrontEnd(object):
         self.info('FE is open.')
 
     def fe_auto(self, value=None):
-        if value != None:
+        if value is not None:
             self.eps.write_attribute(self.FE_AUTO_ATTR, int(value))
             time.sleep(0.1)
         auto_state = bool(self.eps.read_attribute(self.FE_AUTO_ATTR).value)
@@ -255,7 +261,7 @@ class FrontEnd(object):
             msg = 'is not'
             stream = self.warning
             flg_warn = True
-        stream('The beamline %s ready.'  % msg)
+        stream('The beamline %s ready.' % msg)
 
         # FE control room permits
         msg = 'has'
@@ -282,6 +288,7 @@ class FrontEnd(object):
         while self.is_fe_close():
             time.sleep(0.1)
             self.checkPoint()
+
 
 class feclose(Macro, FrontEnd):
     """
@@ -335,7 +342,7 @@ class feauto(Macro, FrontEnd):
     Other macros: feclose, feopen, festatus, fewait
     """
 
-    param_def = [['Active', Type.String, '', '1/0 or Yes/No' ]]
+    param_def = [['Active', Type.String, '', '1/0 or Yes/No']]
 
     def run(self, active):
         TRUE_VALUES = ['1', 'yes', 'true']
@@ -352,7 +359,7 @@ class feauto(Macro, FrontEnd):
             self.fe_auto(False)
         else:
             self.fe_auto()
-            
+
 
 class fewait(Macro, FrontEnd):
     """
@@ -367,4 +374,3 @@ class fewait(Macro, FrontEnd):
     def run(self, *args):
         self.init_fe()
         self.fe_wait()
-
