@@ -1,180 +1,183 @@
 from sardana.macroserver.macro import macro, Type, Macro
 import configparser
 import time
-import fandango
 import PyTango
 import sardana
 import json
 
-class bkp_sardana(Macro):
-    """
-    Macro to save the configuration of all controller, their elements,
-    environments and MeasurementGroups.
-    """
-    param_def = [["filename", Type.String, None, "Filename path"]]
-
-    def run(self, filename):
-        data = {}
-        error_flg = False
-        error_msg = ''
-
-        # Add backup sardana version.
-        version = sardana.release.version
-        self.info('Creating Sardana %r Backup' % version)
-        data['Version'] = version
-
-        # Add backup time
-        t = time.strftime("%b %d %Y %H:%M:%S", time.gmtime(time.time()))
-        data['Date'] = t
-
-        # Add Pool names
-        pools = self.getPools()
-        type_k = 'Pools'
-        data[type_k] ={}
-
-        self.info('\tSaving Pools')
-        self.info('\t\tSaving Pools Properties')
-
-        # Pools
-        for pool in pools:
-
-            #Read Pool Properties
-            data[type_k][str(pool)] = {}
-            properties = pool.get_property(pool.get_property_list('*'))
-            data[type_k][str(pool)]['Properties'] = {}
-            for k, v in list(properties.items()):
-                data[type_k][str(pool)]['Properties'][k] = str(v)
-
-        #MacroServer and Doors
-
-        self.info('\tSaving MacroServers')
-        self.info('\t\tSaving MacroServer Properties')
-        macroservers = fandango.tango.get_class_devices('MacroServer')
-        type_k = 'MacroServers'
-        data[type_k] ={}
-        for ms in macroservers:
-            data[type_k][str(ms)] = {}
-            data[type_k][str(ms)]['Properties'] = {}
-            ms_dev = PyTango.DeviceProxy(ms)
-
-            try:
-                #Read Pool Properties
-                properties = ms_dev.get_property(ms_dev.get_property_list('*'))
-                for k, v in list(properties.items()):
-                    data[type_k][str(ms)]['Properties'][k] = str(v)
-            except Exception as e:
-                data[type_k][str(ms)]['Properties'] = "ERROR on read"
-                #self.error(e)
-
-        # Read Environments
-        environments = self.getManager()._environment_manager._getAllEnv()
-        type_k = 'Environment'
-        data[type_k] = {}
-        self.info('\tSaving Environments')
-
-        for env_name, val in list(environments.items()):
-            data[type_k][env_name] = {}
-            data[type_k][env_name]['Value'] = val
-            data[type_k][env_name]['Type'] = repr(type(val))
-
-        #Controllers
-        type_k = 'Controllers'
-        data[type_k] = {}
-        ctrls = self.getControllers()
-
-        self.info('\tSaving Controllers')
-        self.info('\t\tSaving Controllers Properties')
-
-        self.info('\t\tSaving Controllers Elements')
-        self.info('\t\t\tSaving Elements Properties')
-        self.info('\t\t\tSaving Elements Attributes')
-
-        # List of valid object types retrieved as controller elements.
-        etypes = ["Pool", "Controller", "Motor", "CTExpChannel", 
-                  "ZeroDExpChannel", "OneDExpChannel", "TwoDExpChannel", 
-                  "ComChannel", "IORegister", "TriggerGate", "PseudoMotor", 
-                  "PseudoCounter", "MeasurementGroup", "Instrument"]
-
-        for ctrl in list(ctrls.values()):
-            ctrl = ctrl.getObj()
-
-            ctrl_name = ctrl.getName()
-            data[type_k][ctrl_name] = {}
-
-            # Read the Controller properties
-            properties = ctrl.get_property(ctrl.get_property_list('*'))
-            data[type_k][ctrl_name]['Properties'] = {}
-
-            for k, v in list(properties.items()):
-                data[type_k][ctrl_name]['Properties'][k] = v[0]
-
-            data[type_k][ctrl_name]['Elements'] = {}
-            elements = ctrl.elementlist
-
-            if elements:
-                for element in elements:
-
-                    # elements (motors, counter/timers, etc...)
-                    data[type_k][ctrl_name]['Elements'][str(element)] = {}
-                    try:
-                        elm = self.getObj(element, etypes)
-                    except Exception as e:
-                        self.error('Cannot get element %s\n%s' % (element, str(e)))
-                    # Read element Properties
-                    properties = elm.get_property(elm.get_property_list('*'))
-                    data[type_k][ctrl_name]['Elements'][str(element)]['Properties'] = {}
-
-                    for k, v in list(properties.items()):
-                        data[type_k][ctrl_name]['Elements'][str(element)][
-                            'Properties'][k] = v[0]
-
-                    # Read elements Attributes
-                    attrs = elm.get_attribute_list()
-                    data[type_k][ctrl_name]['Elements'][str(element)]['Attributes'] = {}
-                    for attr in attrs:
-                        try:
-                            attr_value = repr(elm.read_attribute(attr).value)
-                        except Exception as e:
-                            attr_value = 'Error on the read %s ' % attr
-                            error_flg = True
-                            error_msg += "Error in read %r from %r" % (
-                                attr,elm)
-                        data[type_k][ctrl_name]['Elements'][str(element)]['Attributes'][attr] = \
-                            attr_value
-
-        # MeasurementGroups
-        self.info('\tSaving MeasurementGroups')
-        self.info('\t\tSaving MeasurementGroups Properties')
-        self.info('\t\tSaving MeasurementGroups Attributes')
-        filter = ".*"
-        measurementGroups = self.findObjs(filter,
-                                          type_class=Type.MeasurementGroup,
-                                          subtype=Macro.All, reserve=False)
-        type_k = 'MeasurementGroups'
-        data[type_k] = {}
-
-        for meas in measurementGroups:
-
-            # Measurement Group attributes
-            data[type_k][meas.name] = {}
-            attrs = meas.get_attribute_list()
-            data[type_k][meas.name]['Attributes'] = {}
-            for attr in attrs:
-                try:
-                    val = meas.read_attribute(attr).value
-                except:
-                    val = 'Error on the read %s' % attr
-                data[type_k][meas.name]['Attributes'][attr] = val
-
-            # Measurement Groups Properties
-            data[type_k][meas.name]['Properties'] = {}
-            properties = meas.get_property(meas.get_property_list('*'))
-            for k, v in list(properties.items()):
-                data[type_k][meas.name]['Properties'][k] = v[0]
-
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=2)
-        self.info('Saved backup in: %r' % filename)
+# TODO: Uncomment when fandango is migrated to python3
+# import fandango
+#
+#
+# class bkp_sardana(Macro):
+#     """
+#     Macro to save the configuration of all controller, their elements,
+#     environments and MeasurementGroups.
+#     """
+#     param_def = [["filename", Type.String, None, "Filename path"]]
+#
+#     def run(self, filename):
+#         data = {}
+#         error_flg = False
+#         error_msg = ''
+#
+#         # Add backup sardana version.
+#         version = sardana.release.version
+#         self.info('Creating Sardana %r Backup' % version)
+#         data['Version'] = version
+#
+#         # Add backup time
+#         t = time.strftime("%b %d %Y %H:%M:%S", time.gmtime(time.time()))
+#         data['Date'] = t
+#
+#         # Add Pool names
+#         pools = self.getPools()
+#         type_k = 'Pools'
+#         data[type_k] ={}
+#
+#         self.info('\tSaving Pools')
+#         self.info('\t\tSaving Pools Properties')
+#
+#         # Pools
+#         for pool in pools:
+#
+#             #Read Pool Properties
+#             data[type_k][str(pool)] = {}
+#             properties = pool.get_property(pool.get_property_list('*'))
+#             data[type_k][str(pool)]['Properties'] = {}
+#             for k, v in list(properties.items()):
+#                 data[type_k][str(pool)]['Properties'][k] = str(v)
+#
+#         #MacroServer and Doors
+#
+#         self.info('\tSaving MacroServers')
+#         self.info('\t\tSaving MacroServer Properties')
+#         macroservers = fandango.tango.get_class_devices('MacroServer')
+#         type_k = 'MacroServers'
+#         data[type_k] ={}
+#         for ms in macroservers:
+#             data[type_k][str(ms)] = {}
+#             data[type_k][str(ms)]['Properties'] = {}
+#             ms_dev = PyTango.DeviceProxy(ms)
+#
+#             try:
+#                 #Read Pool Properties
+#                 properties = ms_dev.get_property(ms_dev.get_property_list('*'))
+#                 for k, v in list(properties.items()):
+#                     data[type_k][str(ms)]['Properties'][k] = str(v)
+#             except Exception as e:
+#                 data[type_k][str(ms)]['Properties'] = "ERROR on read"
+#                 #self.error(e)
+#
+#         # Read Environments
+#         environments = self.getManager()._environment_manager._getAllEnv()
+#         type_k = 'Environment'
+#         data[type_k] = {}
+#         self.info('\tSaving Environments')
+#
+#         for env_name, val in list(environments.items()):
+#             data[type_k][env_name] = {}
+#             data[type_k][env_name]['Value'] = val
+#             data[type_k][env_name]['Type'] = repr(type(val))
+#
+#         #Controllers
+#         type_k = 'Controllers'
+#         data[type_k] = {}
+#         ctrls = self.getControllers()
+#
+#         self.info('\tSaving Controllers')
+#         self.info('\t\tSaving Controllers Properties')
+#
+#         self.info('\t\tSaving Controllers Elements')
+#         self.info('\t\t\tSaving Elements Properties')
+#         self.info('\t\t\tSaving Elements Attributes')
+#
+#         # List of valid object types retrieved as controller elements.
+#         etypes = ["Pool", "Controller", "Motor", "CTExpChannel",
+#                   "ZeroDExpChannel", "OneDExpChannel", "TwoDExpChannel",
+#                   "ComChannel", "IORegister", "TriggerGate", "PseudoMotor",
+#                   "PseudoCounter", "MeasurementGroup", "Instrument"]
+#
+#         for ctrl in list(ctrls.values()):
+#             ctrl = ctrl.getObj()
+#
+#             ctrl_name = ctrl.getName()
+#             data[type_k][ctrl_name] = {}
+#
+#             # Read the Controller properties
+#             properties = ctrl.get_property(ctrl.get_property_list('*'))
+#             data[type_k][ctrl_name]['Properties'] = {}
+#
+#             for k, v in list(properties.items()):
+#                 data[type_k][ctrl_name]['Properties'][k] = v[0]
+#
+#             data[type_k][ctrl_name]['Elements'] = {}
+#             elements = ctrl.elementlist
+#
+#             if elements:
+#                 for element in elements:
+#
+#                     # elements (motors, counter/timers, etc...)
+#                     data[type_k][ctrl_name]['Elements'][str(element)] = {}
+#                     try:
+#                         elm = self.getObj(element, etypes)
+#                     except Exception as e:
+#                         self.error('Cannot get element %s\n%s' % (element, str(e)))
+#                     # Read element Properties
+#                     properties = elm.get_property(elm.get_property_list('*'))
+#                     data[type_k][ctrl_name]['Elements'][str(element)]['Properties'] = {}
+#
+#                     for k, v in list(properties.items()):
+#                         data[type_k][ctrl_name]['Elements'][str(element)][
+#                             'Properties'][k] = v[0]
+#
+#                     # Read elements Attributes
+#                     attrs = elm.get_attribute_list()
+#                     data[type_k][ctrl_name]['Elements'][str(element)]['Attributes'] = {}
+#                     for attr in attrs:
+#                         try:
+#                             attr_value = repr(elm.read_attribute(attr).value)
+#                         except Exception as e:
+#                             attr_value = 'Error on the read %s ' % attr
+#                             error_flg = True
+#                             error_msg += "Error in read %r from %r" % (
+#                                 attr,elm)
+#                         data[type_k][ctrl_name]['Elements'][str(element)]['Attributes'][attr] = \
+#                             attr_value
+#
+#         # MeasurementGroups
+#         self.info('\tSaving MeasurementGroups')
+#         self.info('\t\tSaving MeasurementGroups Properties')
+#         self.info('\t\tSaving MeasurementGroups Attributes')
+#         filter = ".*"
+#         measurementGroups = self.findObjs(filter,
+#                                           type_class=Type.MeasurementGroup,
+#                                           subtype=Macro.All, reserve=False)
+#         type_k = 'MeasurementGroups'
+#         data[type_k] = {}
+#
+#         for meas in measurementGroups:
+#
+#             # Measurement Group attributes
+#             data[type_k][meas.name] = {}
+#             attrs = meas.get_attribute_list()
+#             data[type_k][meas.name]['Attributes'] = {}
+#             for attr in attrs:
+#                 try:
+#                     val = meas.read_attribute(attr).value
+#                 except:
+#                     val = 'Error on the read %s' % attr
+#                 data[type_k][meas.name]['Attributes'][attr] = val
+#
+#             # Measurement Groups Properties
+#             data[type_k][meas.name]['Properties'] = {}
+#             properties = meas.get_property(meas.get_property_list('*'))
+#             for k, v in list(properties.items()):
+#                 data[type_k][meas.name]['Properties'][k] = v[0]
+#
+#         with open(filename, 'w') as f:
+#             json.dump(data, f, indent=2)
+#         self.info('Saved backup in: %r' % filename)
         
 
 class MntGrpConf(object):
