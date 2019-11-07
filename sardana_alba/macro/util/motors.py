@@ -57,15 +57,15 @@ def moveToHardLim(macro, info_list):
                     macro.debug('Motor %s reached its negative limit.', mot_alias)
                     motorsWhichReachedLim.append(mot_alias)
         return motorsWhichReachedLim
-    except PyTango.DevFailed, e: 
+    except PyTango.DevFailed as e: 
         macro.error(repr(e))
         macro.error('Moving motors: %s was interupted.', repr(motors))
         raise e
 
 def moveToPosHardLim(macro, motors_pos_dict):
     try:
-        motors = motors_pos_dict.keys()
-        positions = motors_pos_dict.values()
+        motors = list(motors_pos_dict.keys())
+        positions = list(motors_pos_dict.values())
         #Checking positive limits state (maybe they were already active)
         motorsOnPosLim = []
         for m in motors:
@@ -76,7 +76,7 @@ def moveToPosHardLim(macro, motors_pos_dict):
                 motorsOnPosLim.append(m)
         if len(motorsOnPosLim): return motorsOnPosLim
         macro.debug('Moving motors: %s towards positive limit...', 
-                   repr([m.alias() for m in motors_pos_dict.keys()]))
+                   repr([m.alias() for m in list(motors_pos_dict.keys())]))
         for m,p in zip(motors,positions):
             macro.debug('Moving motor %s to position: %f).', m.alias(), p)
         motion = macro.getMotion(motors)
@@ -89,15 +89,15 @@ def moveToPosHardLim(macro, motors_pos_dict):
                 macro.debug('Motor %s reached its positive limit.', m.alias())
                 motorsWhichReachedPosLim.append(m)
         return motorsWhichReachedPosLim
-    except PyTango.DevFailed, e: 
+    except PyTango.DevFailed as e: 
         macro.error(repr(e))
         macro.error('Moving motors: %s to positive limits was interupted.', repr(motors))
         raise e
         
 def moveToNegHardLim(macro, motors_pos_dict):
     try:
-        motors = motors_pos_dict.keys()
-        positions = motors_pos_dict.values()
+        motors = list(motors_pos_dict.keys())
+        positions = list(motors_pos_dict.values())
         #Checking negative limits state (maybe they were already active)
         motorsOnNegLim = []
         for m in motors:
@@ -109,7 +109,7 @@ def moveToNegHardLim(macro, motors_pos_dict):
                 motorsOnNegLim.append(m)
         if len(motorsOnNegLim): return motorsOnNegLim
         macro.debug('Moving motors: %s towards negative limit...', 
-                   repr([m.alias() for m in motors_pos_dict.keys()]))
+                   repr([m.alias() for m in list(motors_pos_dict.keys())]))
         for m,p in zip(motors,positions):
             macro.debug('Moving motor %s to position: %f).', m.alias(), p)
         macro.debug('Before getting motion object motion object.')
@@ -126,7 +126,7 @@ def moveToNegHardLim(macro, motors_pos_dict):
                 macro.debug('Motor %s reached its negative limit.', m.alias())
                 motorsWhichReachedNegLim.append(m)
         return motorsWhichReachedNegLim
-    except PyTango.DevFailed, e: 
+    except PyTango.DevFailed as e: 
         macro.error(repr(e))
         macro.error('Moving motors: %s to negative limits was interupted.', repr(motors))
         raise e  
@@ -139,6 +139,6 @@ def moveToReadPos(macro, motors):
     positions = []
     for mot in motors:
         positions.append(mot.getPosition(force=True))
-    macro.debug("Current read positions: %s", repr(zip(motors,positions)))
+    macro.debug("Current read positions: %s", repr(list(zip(motors,positions))))
     motion = macro.getMotion(motors)
     motion.move(positions)
