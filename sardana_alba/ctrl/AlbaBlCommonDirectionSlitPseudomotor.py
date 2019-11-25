@@ -1,4 +1,5 @@
-from sardana.pool.controller import PseudoMotorController
+from sardana.pool.controller import PseudoMotorController, Description, \
+    Type, DefaultValue
 
 
 class CommonDirectionSlit(PseudoMotorController):
@@ -16,11 +17,11 @@ class CommonDirectionSlit(PseudoMotorController):
     motor_roles = ("sl2t", "sl2b")
 
     class_prop = {
-        'sign': {
-            'Type': 'PyTango.DevDouble',
-            'Description': 'Gap = sign * calculated gap\n'
-                           'Offset = sign * calculated offet',
-            'DefaultValue': 1}}
+        'sign': {Type: float,
+                 Description: 'Gap = sign * calculated gap\n'
+                              'Offset = sign * calculated offset',
+                 DefaultValue: 1},
+    }
 
     def calc_physical(self, index, pseudo_pos):
         half_gap = pseudo_pos[0] / 2.0
