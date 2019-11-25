@@ -1,7 +1,3 @@
-import math
-import PyTango
-from sardana import pool
-from sardana.pool import PoolUtil
 from sardana.pool.controller import PseudoMotorController
 
 
