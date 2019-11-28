@@ -36,7 +36,7 @@ class XBPMspectra(Macro):
             self.scan_dir = dev.read_attribute('ScanDir').value
             self.bck_id_gap = None
             
-        except Exception, e:
+        except Exception as e:
             msg = ''
             raise Exception(e)
     
@@ -97,7 +97,7 @@ class XBPMspectra(Macro):
                         #together
                         self.execMacro('mv %s 0 %s 0' % (self.xbpm_h,
                                                          self.xbpm_v))
-        except Exception, e:
+        except Exception as e:
             self.error('Error with the scan %s' % str(e))
             
         finally:
