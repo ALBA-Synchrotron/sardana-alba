@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, shutil
+import os
 import PyTango
 
 from sardana import State
@@ -147,7 +147,7 @@ class LimaCoTiCtrl(CounterTimerController):
             Description: 'Headers for each image',
             Access: DataAccess.ReadWrite,
             Memorize: NotMemorized,
-            MaxDimSize: (1000000,) },
+            MaxDimSize: (1000000,)},
         'LastImageFullName': {
             Type: str,
             Description: 'Image Full Name',
@@ -175,7 +175,7 @@ class LimaCoTiCtrl(CounterTimerController):
 
         try:
             self._limaccd = PyTango.DeviceProxy(self.LimaCCDDeviceName)
-            #self._limaccd.reset()
+            # self._limaccd.reset()
         except PyTango.DevFailed as e:
             raise RuntimeError('__init__(): Could not create a device proxy '
                                'from following device name: %s.\nException: '
@@ -200,11 +200,11 @@ class LimaCoTiCtrl(CounterTimerController):
 
         # Get the Detector Saving Modes allowed
         formats = self._limaccd.command_inout('getAttrStringValueList',
-                                            'saving_format')
+                                              'saving_format')
         self._saving_formats_allowed = formats
 
         # Check if the LimaCCD has the instrument name attribute
-        attrs = attrs_lima = self._limaccd.get_attribute_list()
+        attrs = self._limaccd.get_attribute_list()
         if 'instrument_name' in attrs:
             self._instrument_name = None
         else:
@@ -284,7 +284,7 @@ class LimaCoTiCtrl(CounterTimerController):
                             if self._start_flg:
                                 self._expected_scan_images = 0
                             self._load_flag = False
-                            self._log.debug('StateAll set flag=%s' % 
+                            self._log.debug('StateAll set flag=%s' %
                                             self._load_flag)
                     else:
                         self._state = State.Moving
@@ -307,8 +307,8 @@ class LimaCoTiCtrl(CounterTimerController):
         if self._expected_scan_images == 0:
             # but TrashDir is defined and no acquisition is running
             if self._hasTrashDir and not self._start_flg:
-#                 shutil.rmtree(self.TrashDir)
-#                 os.makedirs(self.TrashDir)
+                # shutil.rmtree(self.TrashDir)
+                # os.makedirs(self.TrashDir)
                 os.system('rm -rf %s/*' % self.TrashDir)
                 self._limaccd.write_attribute('saving_directory',
                                               self.TrashDir)
@@ -321,7 +321,7 @@ class LimaCoTiCtrl(CounterTimerController):
             if repetitions == 1:
                 acq_nb_frames = repetitions
             else:
-                #get repetitions from recorder expected images
+                # get repetitions from recorder expected images
                 acq_nb_frames = self._expected_scan_images
 
         self._log.debug('LoadOne set flag=%s' % self._load_flag)
@@ -399,7 +399,7 @@ class LimaCoTiCtrl(CounterTimerController):
             value = self._limaccd.read_attribute('instrument_name').value
         else:
             value = self._instrument_name
-        return  value
+        return value
 
     def setInstrumentName(self, value):
         if self._instrument_name is None:
@@ -432,7 +432,7 @@ class LimaCoTiCtrl(CounterTimerController):
         raise RuntimeError('It is not possible to read the value')
 
     def setSavingImageHeaders(self, values):
-        print 'Headers %r' % values
+        print('Headers %r' % values)
         try:
             self._limaccd.resetCommonHeader()
             self._limaccd.resetFrameHeaders()
@@ -441,7 +441,7 @@ class LimaCoTiCtrl(CounterTimerController):
                 "Lima version incompatible with reset header methods")
             self._log.debug(e)
         self._limaccd.setImageHeader(values)
-    
+
     def SetCtrlPar(self, parameter, value):
         self._log.debug('SetCtrlPar %s %s' % (parameter, value))
         param = parameter.lower()
