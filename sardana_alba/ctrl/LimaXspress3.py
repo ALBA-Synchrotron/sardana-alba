@@ -3,7 +3,7 @@
 from LimaCoTiCtrl import LimaCoTiCtrl
 from sardana.pool import AcqSynch
 import PyTango
-import time
+
 
 class LimaXspress3CTCtrl(LimaCoTiCtrl):
     """
@@ -76,9 +76,9 @@ class LimaXspress3CTCtrl(LimaCoTiCtrl):
         else:
             chn = int(axis/2) - 1
             if chn > self._nr_channels:
-                return False 
+                return False
             if chn not in self._start_channels:
-                 self._start_channels.append(chn)
+                self._start_channels.append(chn)
         return True
 
     def ReadAll(self):
