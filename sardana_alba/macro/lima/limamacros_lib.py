@@ -224,11 +224,7 @@ Parameter list:
                   ['paramIn',Type.String, None, 'Parameter name.']]
     result_def = [['paramOut',Type.String, None, 'Parameter value']]
         
-    @catch_error
-    def run(self,dev,param):
-        lima = taurus.Device(dev)
-
-        Param = {'FileDir': 'saving_directory',
+    param_list = {'FileDir': 'saving_directory',
                  'FilePrefix': 'saving_prefix',
                  'FileFormat': 'saving_format',
                  'NbFrames': 'acq_nb_frames',
@@ -238,7 +234,10 @@ Parameter list:
                  'NextNumber':'saving_next_number',
                  'SavingMode':'saving_mode'}
 
-        value = lima.read_attribute(Param[param]).value
+    @catch_error
+    def run(self,dev,param):
+        lima = taurus.Device(dev)
+        value = lima.read_attribute(self.param_list[param]).value
         return str(value)
 
 
@@ -251,12 +250,9 @@ class lima_printconfig(Macro):
     @catch_error
     def run(self,dev):
 
-        Param = ['FileDir', 'FilePrefix', 'FileFormat', 'NbFrames', 
-                 'ExposureTime', 'LatencyTime', 'TriggerMode', 'SavingMode']
-
-        for par in Param:            
-            result = self.execMacro(['lima_getconfig',dev,par])
-            self.info("%s = %s" % (par,result.getResult()))
+        for par in lima_getconfig.param_list:            
+            result = self.execMacro(['lima_getconfig', dev, par])
+            self.info("%s = %s" % (par, result.getResult()))
 
 
 
@@ -456,3 +452,73 @@ class lima_take(Macro):
                 break
             
         self.info(acq)
+
+
+class lima_macros_test(Macro):
+
+    param_def =  [['dev', Type.String, None, 'Device name or alias']]
+
+    def run(self, dev):
+        status = self.execMacro("lima_status", dev).getResult()
+        self.info("%s Status %s" % (dev, status))
+        
+        self.execMacro("lima_printconfig", dev)
+        
+        last_buffer = self.execMacro("lima_lastbuffer", dev).getResult()
+        self.info("Last buffer %i" % last_buffer)
+        
+        last_image = self.execMacro("lima_lastimage", dev).getResult()
+        self.info("Last image %i" % last_image)
+        
+        self.execMacro("lima_nextimage", dev, last_image + 2)
+        
+        next_imagefile = self.execMacro("lima_nextimagefile", dev).getResult()
+        self.info("Next image file %s" % next_imagefile)
+        
+        flip = self.execMacro("lima_get_flip", dev).getResult()
+        flip = [bool(x) for x in flip.split()]
+        self.info("Current flip %s" % str(flip))
+        self.execMacro("lima_set_flip", dev, not flip[0], not flip[1])
+        flip = self.execMacro("lima_get_flip", dev).getResult()
+        flip = [bool(x) for x in flip.split()]
+        self.info("New flip %s" % str(flip))
+        self.execMacro("lima_set_flip", dev, not flip[0], not flip[1])
+        flip = self.execMacro("lima_get_flip", dev).getResult()
+        flip = [bool(x) for x in flip.split()]
+        self.info("Original flip %s" % str(flip))
+        
+        binning = self.execMacro("lima_get_bin", dev).getResult()
+        binning = [int(x) for x in binning.split()]
+        self.info("Current binning %i %i" % (binning[0], binning[1]))
+        self.execMacro("lima_set_bin", dev, 1, 1)
+        new_binning = self.execMacro("lima_get_bin", dev).getResult()
+        self.info("New binning %s" % new_binning)
+        self.execMacro("lima_set_bin", dev, binning[0], binning[1])
+        binning = self.execMacro("lima_get_bin", dev).getResult()
+        self.info("Original binning %s" % str(binning))
+        
+        self.execMacro("lima_set_first_image", dev, 10)
+        first = self.execMacro("lima_get_first_image", dev).getResult()
+        self.info("First Image %i" % first)
+        
+        self.execMacro("lima_reset", dev)
+        
+        self.execMacro("lima_common_header", dev,
+                       "CommonHeader=True|Header=True")
+        self.execMacro("lima_take", dev)
+
+        self.execMacro("lima_saving", dev, "/tmp", "LimaTest", "EDF", False)
+        self.execMacro("lima_prepare", dev)
+        self.execMacro("lima_acquire", dev)
+        
+        while True:
+            status = self.execMacro('lima_status',dev)
+            state, acq = status.getResult().split()
+            time.sleep(0.5)
+            if acq != 'Running' :
+                break
+
+        self.execMacro("lima_image_header", dev,
+                       ["0;ImageHeader=True|Image=0"])
+        self.execMacro("lima_write_image", dev, 0)
+        self.execMacro("lima_stop", dev)
