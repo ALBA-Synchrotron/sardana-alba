@@ -15,14 +15,14 @@ def catch_error(meth):
     def _catch_error(self, *args, **kws):
         try:
             return meth(self, *args, **kws)
-        except Exception as e:
-            self.debug(e)
+        except Exception as e1:
+            self.debug(e1)
             try:  
                 self.error("Macro %s failed with argument %s" %(meth.__name__ , " ".join(args)))
-            except Exception as e:
+            except Exception as e2:
                 self.error("Error processing  _catch_error, args[0].")
             finally:
-                raise e
+                raise e1
     return _catch_error
 
 
