@@ -1,6 +1,7 @@
 import math
 
-from sardana.pool.controller import PseudoMotorController
+from sardana.pool.controller import (
+    PseudoMotorController, Type, Description, DefaultValue)
 
 
 class TwoLeggedTable:
@@ -48,16 +49,16 @@ class TwoLeggedTableController(PseudoMotorController, TwoLeggedTable):
     pseudo_motor_roles = ('pos', 'rot')
     motor_roles = ('t1', 't2')
 
-    class_prop = {
+    ctrl_properties = {
         'dist1': {
-            'Type': 'PyTango.DevDouble',
-            'Description': 'First jack possition in mm',
-            'DefaultValue': -500.0  # mm
+            Type: 'PyTango.DevDouble',
+            Description: 'First jack possition in mm',
+            DefaultValue: -500.0  # mm
         },
         'dist2': {
-            'Type': 'PyTango.DevDouble',
-            'Description': ('Second jack possition in mm'),
-            'DefaultValue': 500.0  # mm
+            Type: 'PyTango.DevDouble',
+            Description: ('Second jack possition in mm'),
+            DefaultValue: 500.0  # mm
         },
     }
 

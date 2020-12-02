@@ -1,6 +1,6 @@
 import time
 
-from sardana.macroserver.macro import Macro, Type, ParamRepeat
+from sardana.macroserver.macro import Macro, Type
 
 
 class MGManager(object):
@@ -86,10 +86,14 @@ class meas_enable_ch(Macro):
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState',
-         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
-                                                        'state'], min=1),
-         None, 'List of channels to Enable'],
+        ['ChannelState', [
+            [
+                'channel',
+                Type.ExpChannel,
+                None,
+                'Channel to change state'],
+            {'min': 1}],
+            None, 'List of channels to Enable'],
     ]
 
     def run(self, mntGrp, channels):
@@ -106,10 +110,14 @@ class meas_enable_ch_only(Macro):
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState',
-         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
-                                                        'state'], min=1),
-         None, 'List of channels to Enable'],
+        ['ChannelState', [
+            [
+                'channel',
+                Type.ExpChannel,
+                None,
+                'Channel to change state'],
+            {'min': 1}],
+            None, 'List of channels to Enable'],
     ]
 
     def run(self, mntGrp, channels):
@@ -126,10 +134,14 @@ class meas_disable_ch(Macro):
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState',
-         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
-                                                        'state'], min=1),
-         None, 'List of channels to Enable'],
+        ['ChannelState', [
+            [
+                'channel',
+                Type.ExpChannel,
+                None,
+                'Channel to change state'],
+            {'min': 1}],
+            None, 'List of channels to disable'],
     ]
 
     def run(self, mntGrp, channels):
@@ -146,10 +158,14 @@ class meas_disable_ch_only(Macro):
     param_def = [
         ['MeasurementGroup', Type.MeasurementGroup, None,
          "Measurement Group to work"],
-        ['ChannelState',
-         ParamRepeat(['channel', Type.ExpChannel, None, 'Channel to change '
-                                                        'state'], min=1),
-         None, 'List of channels to Enable'],
+        ['ChannelState', [
+            [
+                'channel',
+                Type.ExpChannel,
+                None,
+                'Channel to change state'],
+            {'min': 1}],
+            None, 'List of channels to disable'],
     ]
 
     def run(self, mntGrp, channels):

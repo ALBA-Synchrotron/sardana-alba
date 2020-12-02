@@ -7,7 +7,7 @@ import os, errno
 import time
 import functools
 
-from sardana.macroserver.macro import Macro, Type, ParamRepeat
+from sardana.macroserver.macro import Macro, Type
 
 
 def catch_error(meth):
@@ -184,12 +184,19 @@ Example:
     lima_image_header my_device "0;beam_x=1024|beam_y=1024" "1;beam_x=1024|beam_y=1024" ...
 """
 
-    param_def =  [['dev',Type.String, None, 'Device name or alias'],
-                  ['header_list',
-                   ParamRepeat(['header', Type.String, None, 
-                   'Header definition syntax: IMAGE_ID;key1=value1|key2=value2|key3=value3 ...']),
-                   None, 'List of header definitions']
-                  ]
+    param_def = [
+        ['dev', Type.String, None, 'Device name or alias'],
+        ['header_list', [
+            [
+                'header',
+                Type.String,
+                None,
+                'Header definition syntax: IMAGE_ID;key1=value1|key2=value2|'
+                'key3=value3 ...'
+            ]],
+            None,
+            'List of header definitions']
+    ]
 
 #    @catch_error
     def run(self,*args):
