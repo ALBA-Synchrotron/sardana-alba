@@ -46,7 +46,6 @@ class LimaCoTiCtrl(CounterTimerController):
 
     MaxDevice = 1
 
-    class_prop = {}
     ctrl_attributes = {
         'CameraModel': {
             Type: str,

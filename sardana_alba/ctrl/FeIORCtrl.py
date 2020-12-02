@@ -10,7 +10,7 @@ class FeIORController(IORegisterController):
 
     """
       
-    class_prop = {
+    ctrl_properties = {
         'EpsDevice': {
             Type: str,
             Description: 'Name of EPS tango device'},
@@ -38,7 +38,7 @@ class FeIORController(IORegisterController):
                          'control of the fe is disabled'}
     }
 
-    ctrl_extra_attributes = {
+    axis_attributes = {
         'Labels': {Type: str,
                    Description: 'String list with meaning of the fe state',
                    Access: DataAccess.ReadWrite}
@@ -100,9 +100,9 @@ class FeIORController(IORegisterController):
         else:
             raise ValueError("This ior accepts only 0 and 1 values")
     
-    def GetExtraAttributePar(self, axis, name):
+    def GetAxisExtraPar(self, axis, name):
         if name.lower() == 'labels':
             return "Open:1 Close:0"
   
-    def SetExtraAttributePar(self, axis, name, value):
+    def SetAxisExtraPar(self, axis, name, value):
         pass

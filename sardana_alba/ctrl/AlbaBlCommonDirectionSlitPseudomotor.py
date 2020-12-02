@@ -16,14 +16,14 @@ class CommonDirectionSlit(PseudoMotorController):
     pseudo_motor_roles = ("Gap", "Offset")
     motor_roles = ("sl2t", "sl2b")
 
-    class_prop = {
+    ctrl_properties = {
         'sign': {Type: float,
                  Description: 'Gap = sign * calculated gap\n'
                               'Offset = sign * calculated offset',
                  DefaultValue: 1},
     }
 
-    def calc_physical(self, index, pseudo_pos):
+    def CalcPhysical(self, index, pseudo_pos, curr_physicals):
         half_gap = pseudo_pos[0] / 2.0
         if index == 1:
             ret = self.sign * (pseudo_pos[1] + half_gap)
@@ -31,7 +31,7 @@ class CommonDirectionSlit(PseudoMotorController):
             ret = self.sign * (pseudo_pos[1] - half_gap)
         return ret
 
-    def calc_pseudo(self, index, physical_pos):
+    def CalcPseudo(self, index, physical_pos, curr_pseudos):
         gap = physical_pos[0] - physical_pos[1]
         if index == 1:
             ret = self.sign * gap
@@ -39,14 +39,14 @@ class CommonDirectionSlit(PseudoMotorController):
             ret = self.sign * (physical_pos[0] - gap / 2.0)
         return ret
 
-    def calc_all_pseudo(self, physical_pos):
+    def CalcAllPseudo(self, physical_pos, curr_pseudos):
         """Calculates the positions of all pseudo motors that belong to the
            pseudo motor system from the positions of the physical motors."""
         gap = physical_pos[0] - physical_pos[1]
         return (self.sign * gap,
                 self.sign * (physical_pos[0] - gap / 2.0))
 
-    def calc_all_physical(self, pseudo_pos):
+    def CalcAllPhysical(self, pseudo_pos, curr_physicals):
         """Calculates the positions of all motors that belong to the pseudo
            motor system from the positions of the pseudo motors."""
         half_gap = pseudo_pos[0] / 2.0

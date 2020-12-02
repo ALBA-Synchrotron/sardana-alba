@@ -38,7 +38,7 @@ class set_user_pos_pm(Macro):
         moveable_type = moveable.getType()
         if moveable_type == "PseudoMotor":
             moveables_names = moveable.elements
-            values = moveable.calcphysical(pos)
+            values = moveable.CalcPhysical(pos)
             sub_moveables = [(self.getMoveable(name), value)
                              for name, value in zip(moveables_names, values)]
             for sub_moveable, value in sub_moveables:

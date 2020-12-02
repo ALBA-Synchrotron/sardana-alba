@@ -20,7 +20,7 @@ class LimaRoICounterCtrl(CounterTimerController):
     image = "Lima_ctrl.png"
     logo = "ALBA_logo.png"
 
-    class_prop = {
+    ctrl_properties = {
         'LimaROIDeviceName': {Type: str, Description: 'Name of the roicounter '
                                                       'lima device'},
         'LimaROIBufferSize': {Type: int, Description: 'Circular buffer size '
@@ -219,7 +219,7 @@ class LimaRoICounterCtrl(CounterTimerController):
         self._log.debug("ReadOne return %r" % value)
         return int(value)
 
-    def GetExtraAttributePar(self, axis, name):
+    def GetAxisExtraPar(self, axis, name):
         name = name.lower()
         result = None
         if 'roi' in name:
@@ -234,7 +234,7 @@ class LimaRoICounterCtrl(CounterTimerController):
                 result = roi[3]
         return result
 
-    def SetExtraAttributePar(self, axis, name, value):
+    def SetAxisExtraPar(self, axis, name, value):
         name = name.lower()
         if 'roi' in name:
             roi = self._rois[axis]['roi']
