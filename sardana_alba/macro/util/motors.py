@@ -21,9 +21,6 @@ def moveToHardLim(macro, info_list):
         # Checking limits state (maybe they were already active)
         motorsOnLim = []
         for mot, lim in zip(motors, limits):
-            # @TODO:remove this line when Pool bug will be fixed.
-            #  (Missing state event)
-            mot.getStateExObj().readValue(force=True)
             mot_alias = mot.alias()
             if lim > 0:
                 if mot.Limit_switches[1]:
@@ -83,9 +80,6 @@ def moveToPosHardLim(macro, motors_pos_dict):
         # Checking positive limits state (maybe they were already active)
         motorsOnPosLim = []
         for m in motors:
-            # @TODO:remove this line when Pool bug will be fixed.
-            #  (Missing state event)
-            m.getStateExObj().readValue(force=True)
             if m.Limit_switches[1]:
                 macro.debug(
                     'Motor %s is already at the positive limit.',
@@ -122,9 +116,6 @@ def moveToNegHardLim(macro, motors_pos_dict):
         # Checking negative limits state (maybe they were already active)
         motorsOnNegLim = []
         for m in motors:
-            # @TODO:remove this line when Pool bug will be fixed.
-            #  (Missing state event)
-            m.getStateExObj().readValue(force=True)
             # macro.output(type(m.getAttribute('StatusLim-')))
             if m.Limit_Switches[2]:
                 macro.debug(
