@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from LimaCoTiCtrl import LimaCoTiCtrl
+from sardana_alba.ctrl.LimaCoTiCtrl import LimaCoTiCtrl
 from sardana.pool import AcqSynch
 import PyTango
 
