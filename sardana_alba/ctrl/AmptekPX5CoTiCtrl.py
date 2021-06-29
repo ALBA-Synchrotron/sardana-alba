@@ -38,8 +38,8 @@ class AmptekPX5CounterTimerController(CounterTimerController):
 
     class_prop = {'deviceName':{'Type':str,'Description':'AmptekPX5 Tango device name','DefaultValue':None},}
 
-    axis_attributes = { "lowThreshold"   : { "Type" : long, "R/W Type": "READ_WRITE" },
-                        "highThreshold" : { "Type" : long, "R/W Type": "READ_WRITE" }}
+    axis_attributes = { "lowThreshold"   : { "Type" : int, "R/W Type": "READ_WRITE" },
+                        "highThreshold" : { "Type" : int, "R/W Type": "READ_WRITE" }}
 
     def __init__(self, inst, props, *args, **kwargs):
         CounterTimerController.__init__(self, inst, props, *args, **kwargs)
@@ -62,7 +62,7 @@ class AmptekPX5CounterTimerController(CounterTimerController):
         elif name == "highthreshold":
             conf = ["SCAI=%d"%scai, "SCAH"]
             ret = self.amptekPX5.GetTextConfiguration(conf)
-        v = long(ret[1].split("=")[1])
+        v = int(ret[1].split("=")[1])
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -74,7 +74,7 @@ class AmptekPX5CounterTimerController(CounterTimerController):
         if name == "lowthreshold":
             conf = ["SCAI=%d"%scai, "SCAH"]
             ret = self.amptekPX5.GetTextConfiguration(conf)
-            scah = long(ret[1].split("=")[1])
+            scah = int(ret[1].split("=")[1])
             conf = ["SCAI=%d"%scai, "SCAL=%d"%value, "SCAH=%d"%scah]
             for c in conf:
                 self._log.debug("conf: %s" % repr(c))
@@ -82,7 +82,7 @@ class AmptekPX5CounterTimerController(CounterTimerController):
         elif name == "highthreshold":
             conf = ["SCAI=%d"%scai, "SCAL"]
             ret = self.amptekPX5.GetTextConfiguration(conf)
-            scal = long(ret[1].split("=")[1])
+            scal = int(ret[1].split("=")[1])
             conf = ["SCAI=%d"%scai, "SCAL=%d"%scal, "SCAH=%d"%value]
             for c in conf:
                 self._log.debug("conf: %s" % repr(c))
@@ -176,8 +176,8 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
 
     class_prop = {'deviceName':{'Type':str,'Description':'AmptekPX5 Tango device name','DefaultValue':None},}
 
-    axis_attributes = { "lowThreshold"   : { "Type" : long, "R/W Type": "READ_WRITE", "memorized":Memorized },
-                        "highThreshold" : { "Type" : long, "R/W Type": "READ_WRITE", "memorized":Memorized }
+    axis_attributes = { "lowThreshold"   : { "Type" : int, "R/W Type": "READ_WRITE", "memorized":Memorized },
+                        "highThreshold" : { "Type" : int, "R/W Type": "READ_WRITE", "memorized":Memorized }
                       }
 
     def __init__(self, inst, props, *args, **kwargs):
@@ -236,7 +236,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
                 self.acqStartTime = None
         try:
             self.sta = self.amptekPX5.State()
-        except PyTango.DevFailed, e:
+        except PyTango.DevFailed as e:
             self.amptekPX5.ClearInputBuffer()
             self.sta = self.amptekPX5.State()
         self.status = self.amptekPX5.Status()
