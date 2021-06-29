@@ -23,7 +23,7 @@
 import time
 import numpy
 
-import PyTango
+import tango
 import taurus
 
 from sardana import State
@@ -256,7 +256,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
                 self.acqStartTime = None
         try:
             self.sta = self.amptekPX5.State()
-        except PyTango.DevFailed as e:
+        except tango.DevFailed as e:
             self.amptekPX5.ClearInputBuffer()
             self.sta = self.amptekPX5.State()
         self.status = self.amptekPX5.Status()
