@@ -233,7 +233,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
                 self.acqStartTime = None
         try:
             self.sta = self.amptekPX5.State()
-        except tango.DevFailed as e:
+        except tango.DevFailed:
             self.amptekPX5.ClearInputBuffer()
             self.sta = self.amptekPX5.State()
         self.status = self.amptekPX5.Status()
