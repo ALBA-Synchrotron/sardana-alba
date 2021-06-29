@@ -252,17 +252,17 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
 
     def ReadOne(self, ind):
         self._log.debug("ReadOne(%d): entering..." % ind)
-        if self.spectrum == None:  # acquisition has not finished yet
+        if self.spectrum is None:  # acquisition has not finished yet
             val = 0
         else:
             if ind == 1:  # timer
                 val = self.acqTime
             elif ind == 2:  # icr
-                if self.icr == None:
+                if self.icr is None:
                     self.icr = self.amptekPX5.read_attribute("FastCount").value
                 val = self.icr
             elif ind == 3:  # tcr
-                if self.tcr == None:
+                if self.tcr is None:
                     self.tcr = self.amptekPX5.read_attribute("SlowCount").value
                 val = self.tcr
             else:  # calculating software ROIs
