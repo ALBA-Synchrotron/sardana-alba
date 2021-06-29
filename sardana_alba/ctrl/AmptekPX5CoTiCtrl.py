@@ -24,7 +24,6 @@ import time
 import numpy
 
 import tango
-import taurus
 
 from sardana import State
 from sardana.pool.controller import CounterTimerController, Memorized
@@ -51,7 +50,7 @@ class AmptekPX5CounterTimerController(CounterTimerController):
 
     def __init__(self, inst, props, *args, **kwargs):
         CounterTimerController.__init__(self, inst, props, *args, **kwargs)
-        self.amptekPX5 = taurus.Device(self.deviceName)
+        self.amptekPX5 = tango.DeviceProxy(self.deviceName)
         self.amptekPX5.set_timeout_millis(7000)
         self.acqTime = 0
         self.sta = State.On
@@ -202,7 +201,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
 
     def __init__(self, inst, props, *args, **kwargs):
         CounterTimerController.__init__(self, inst, props, *args, **kwargs)
-        self.amptekPX5 = taurus.Device(self.deviceName)
+        self.amptekPX5 = tango.DeviceProxy(self.deviceName)
         self.amptekPX5.SetTextConfiguration(["MCAC=%d" % 4096])
         self.amptekPX5.set_timeout_millis(7000)
         self.acqTime = 0
