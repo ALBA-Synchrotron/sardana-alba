@@ -36,7 +36,7 @@ class AmptekPX5CounterTimerController(CounterTimerController):
 
     MaxDevice = 17
 
-    class_prop = {
+    ctrl_properties = {
         "deviceName": {
             "Type": str,
             "Description": "AmptekPX5 Tango device name",
@@ -147,23 +147,23 @@ class AmptekPX5CounterTimerController(CounterTimerController):
         self._log.debug("ReadOne(%d): returning %d" % (ind, val))
         return val
 
-    def PreStartAllCT(self):
+    def PreStartAll(self):
         self.amptekPX5.ClearSpectrum()
         self.amptekPX5.LatchGetClearSCA()
         self.sca_values = [0] * 16
 
-    def PreStartOneCT(self, ind):
+    def PreStartOne(self, ind, value):
         return True
 
-    def StartOneCT(self, ind):
+    def StartOne(self, ind):
         pass
 
-    def StartAllCT(self):
+    def StartAll(self):
         self._log.debug("StartAllCT(): entering...")
         self.amptekPX5.Enable()
         self.acq = True
 
-    def LoadOne(self, ind, value):
+    def LoadOne(self, ind, value, repetitions, latency):
         self._log.debug("LoadOne(): entering...")
         self.acqTime = value
         self.amptekPX5.SetTextConfiguration(["PRET=%f" % value])
@@ -183,7 +183,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
 
     MaxDevice = 17
 
-    class_prop = {
+    ctrl_properties = {
         "deviceName": {
             "Type": str,
             "Description": "AmptekPX5 Tango device name",
@@ -295,16 +295,16 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
         self._log.debug("ReadOne(%d): returning %d" % (ind, val))
         return val
 
-    def PreStartAllCT(self):
+    def PreStartAll(self):
         self.amptekPX5.ClearSpectrum()
 
-    def PreStartOneCT(self, ind):
+    def PreStartOne(self, ind, value):
         return True
 
-    def StartOneCT(self, ind):
+    def StartOne(self, ind, value):
         pass
 
-    def StartAllCT(self):
+    def StartAll(self):
         self._log.debug("StartAllCT(): entering...")
         self.spectrum = None
         self.icr = None
@@ -315,7 +315,7 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
         self.status = "Acquisition was started"
         self._log.debug("StartAllCT(): leaving...")
 
-    def LoadOne(self, ind, value):
+    def LoadOne(self, ind, value, repetitions, latency):
         self._log.debug("LoadOne(): entering...")
         if value < 0.1:
             raise Exception(
