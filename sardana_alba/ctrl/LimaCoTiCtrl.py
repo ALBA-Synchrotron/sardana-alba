@@ -2,7 +2,7 @@
 
 import os
 import PyTango
-
+from time import sleep
 from sardana import State
 from sardana.pool import AcqSynch
 from sardana.pool.controller import CounterTimerController, Type, \
@@ -356,6 +356,9 @@ class LimaCoTiCtrl(CounterTimerController):
             return
         self._log.debug("Start Acquisition")
         self._limaccd.startAcq()
+        while self._state != State.Moving:
+            sleep(0.1)
+            self.StateAll()
         self._start_flg = True
 
     def ReadAll(self):
@@ -366,10 +369,10 @@ class LimaCoTiCtrl(CounterTimerController):
             # Step scan or Continuous scan by software
             self._data_buff[axis] = [self._int_time]
         else:
-            self._data_buff[axis] = []
             if new_image_ready == self._last_image_read:
                 self._new_data = False
                 return
+            self._data_buff[axis] = []
             self._last_image_read += 1
             new_data = (new_image_ready - self._last_image_read) + 1
             if new_image_ready == 0:
@@ -380,7 +383,10 @@ class LimaCoTiCtrl(CounterTimerController):
 
     def ReadOne(self, axis):
         self._log.debug('Entering in  ReadOne')
-        return self._data_buff[axis]
+        if self._synchronization == AcqSynch.SoftwareTrigger:
+            return self._data_buff[axis][0]
+        else:
+            return self._data_buff[axis]
 
     def AbortOne(self, axis):
         self._log.debug('AbortOne in')
