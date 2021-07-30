@@ -1,6 +1,6 @@
 import time
 from sardana.macroserver.macro import Macro, Type
-import taurus
+import PyTango
 
 
 class dwell(Macro):
@@ -38,7 +38,7 @@ class set_user_pos_pm(Macro):
         moveable_type = moveable.getType()
         if moveable_type == "PseudoMotor":
             moveables_names = moveable.elements
-            values = moveable.CalcPhysical(pos)
+            values = moveable.calcphysical(pos)
             sub_moveables = [(self.getMoveable(name), value)
                              for name, value in zip(moveables_names, values)]
             for sub_moveable, value in sub_moveables:
@@ -59,11 +59,14 @@ class PSHU(object):
     OPEN_VALUE = 1
     CLOSE_VALUE = 0
 
+    def __init__(self):
+        self.initPSHU()
+
     def initPSHU(self):
         try:
             sh_attr_name = self.getEnv('PshuAttr')
             self.sh_timeout = self.getEnv('PshuTimeout')
-            self.attr = taurus.Attribute(sh_attr_name)
+            self.attr = PyTango.AttributeProxy(sh_attr_name)
 
         except Exception as e:
             msg = 'The macro use the environment variable PshuAttr which ' \
@@ -106,39 +109,39 @@ class PSHU(object):
         self.info('The photon shutter is closed')
 
 
-class shopen(Macro, PSHU):
+pshutter = PSHU()
+
+
+class shopen(Macro):
     """
     This macro open the photon shutter.
 
     Other macros: shclose, shstate
     """
     def run(self):
-        self.initPSHU()
-        self.open()
+        pshutter.open()
 
 
-class shclose(Macro, PSHU):
+class shclose(Macro):
     """
     This macro close the photon shutter.
 
     Other macros: shopen, shstate
     """
     def run(self):
-        self.initPSHU()
-        self.close()
+        pshutter.close()
 
 
-class shstate(Macro, PSHU):
+class shstate(Macro):
     """
     This macro show the photon shutter state.
 
     Other macros: shopen, shclose
     """
     def run(self):
-        self.initPSHU()
-        state = self.state
+        state = pshutter.state
         st_msg = 'closed'
-        if state == self.OPEN_VALUE:
+        if state == pshutter.OPEN_VALUE:
             st_msg = 'open'
 
         self.info('The photon shutter is ' + st_msg)
@@ -163,11 +166,14 @@ class FrontEnd(object):
     CLOSE = 1
     OPEN = 2
 
+    def __init__(self):
+        self.init_fe()
+
     def init_fe(self):
         try:
             eps_name = self.getEnv('EPSName')
             self.fe_timeout = self.getEnv('FeTimeout')
-            self.eps = taurus.Device(eps_name)
+            self.eps = PyTango.DeviceProxy(eps_name)
 
         except Exception as e:
             msg = 'The macro use the environment variable EPSName which has ' \
@@ -290,7 +296,10 @@ class FrontEnd(object):
             self.checkPoint()
 
 
-class feclose(Macro, FrontEnd):
+fe = FrontEnd()
+
+
+class feclose(Macro):
     """
     Macro to close the Front End.
 
@@ -300,11 +309,10 @@ class feclose(Macro, FrontEnd):
     param_def = []
 
     def run(self, *args):
-        self.init_fe()
-        self.fe_close()
+        fe.fe_close()
 
 
-class feopen(Macro, FrontEnd):
+class feopen(Macro):
     """
     Macro to open the Front End.
 
@@ -314,11 +322,10 @@ class feopen(Macro, FrontEnd):
     param_def = []
 
     def run(self, *args):
-        self.init_fe()
-        self.fe_open()
+        fe.fe_open()
 
 
-class festatus(Macro, FrontEnd):
+class festatus(Macro):
     """
     Macro to see the Front End status.
 
@@ -328,11 +335,10 @@ class festatus(Macro, FrontEnd):
     param_def = []
 
     def run(self, *args):
-        self.init_fe()
-        self.fe_status()
+        fe.fe_status()
 
 
-class feauto(Macro, FrontEnd):
+class feauto(Macro):
     """
     Macro to set the automatic opening of the Front End.
 
@@ -352,16 +358,15 @@ class feauto(Macro, FrontEnd):
             msg = 'Wrong value. See the help for more information.'
             raise ValueError(msg)
 
-        self.init_fe()
         if active in TRUE_VALUES:
-            self.fe_auto(True)
+            fe.fe_auto(True)
         elif active in FALSE_VALUES:
-            self.fe_auto(False)
+            fe.fe_auto(False)
         else:
-            self.fe_auto()
+            fe.fe_auto()
 
 
-class fewait(Macro, FrontEnd):
+class fewait(Macro):
     """
     Macro to wait during the Front End is closed. It raise an exception if
     the automatic mode is off.
@@ -372,5 +377,4 @@ class fewait(Macro, FrontEnd):
     param_def = []
 
     def run(self, *args):
-        self.init_fe()
-        self.fe_wait()
+        fe.fe_wait()
