@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sardana-alba",
-    version="0.6.1",
+    version="0.6.2",
     description="ALBA specific sardana tools (controllers, macros, tools)",
     author="ALBA controls team",
     author_email="controls@cells.es",
