@@ -5,6 +5,7 @@ import tango
 
 from sardana import State
 from sardana.pool.controller import CounterTimerController, Memorized
+from sardana.pool.controller import Type, Access, Description, DefaultValue
 from sardana.pool import AcqTriggerType
 
 
@@ -15,9 +16,9 @@ class AmptekPX5CounterTimerController(CounterTimerController):
 
     ctrl_properties = {
         "deviceName": {
-            "Type": str,
-            "Description": "AmptekPX5 Tango device name",
-            "DefaultValue": None,
+            Type: str,
+            Description: "AmptekPX5 Tango device name",
+            DefaultValue: None,
         },
     }
 
@@ -162,9 +163,9 @@ class AmptekPX5SoftCounterTimerController(CounterTimerController):
 
     ctrl_properties = {
         "deviceName": {
-            "Type": str,
-            "Description": "AmptekPX5 Tango device name",
-            "DefaultValue": None,
+            Type: str,
+            Description: "AmptekPX5 Tango device name",
+            DefaultValue: None,
         },
     }
 
