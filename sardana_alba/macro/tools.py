@@ -38,7 +38,7 @@ class set_user_pos_pm(Macro):
         moveable_type = moveable.getType()
         if moveable_type == "PseudoMotor":
             moveables_names = moveable.elements
-            values = moveable.calcphysical(pos)
+            values = moveable.CalcPhysical(pos)
             sub_moveables = [(self.getMoveable(name), value)
                              for name, value in zip(moveables_names, values)]
             for sub_moveable, value in sub_moveables:
@@ -109,39 +109,39 @@ class PSHU(object):
         self.info('The photon shutter is closed')
 
 
-pshutter = PSHU()
-
-
-class shopen(Macro):
+class shopen(Macro, PSHU):
     """
     This macro open the photon shutter.
 
     Other macros: shclose, shstate
     """
     def run(self):
-        pshutter.open()
+        self.initPSHU()
+        self.open()
 
 
-class shclose(Macro):
+class shclose(Macro, PSHU):
     """
     This macro close the photon shutter.
 
     Other macros: shopen, shstate
     """
     def run(self):
-        pshutter.close()
+        self.initPSHU()
+        self.close()
 
 
-class shstate(Macro):
+class shstate(Macro, PSHU):
     """
     This macro show the photon shutter state.
 
     Other macros: shopen, shclose
     """
     def run(self):
-        state = pshutter.state
+        self.initPSHU()
+        state = self.state
         st_msg = 'closed'
-        if state == pshutter.OPEN_VALUE:
+        if state == self.OPEN_VALUE:
             st_msg = 'open'
 
         self.info('The photon shutter is ' + st_msg)
@@ -296,10 +296,7 @@ class FrontEnd(object):
             self.checkPoint()
 
 
-fe = FrontEnd()
-
-
-class feclose(Macro):
+class feclose(Macro, FrontEnd):
     """
     Macro to close the Front End.
 
@@ -309,10 +306,11 @@ class feclose(Macro):
     param_def = []
 
     def run(self, *args):
-        fe.fe_close()
+        self.init_fe()
+        self.fe_close()
 
 
-class feopen(Macro):
+class feopen(Macro, FrontEnd):
     """
     Macro to open the Front End.
 
@@ -322,10 +320,11 @@ class feopen(Macro):
     param_def = []
 
     def run(self, *args):
-        fe.fe_open()
+        self.init_fe()
+        self.fe_open()
 
 
-class festatus(Macro):
+class festatus(Macro, FrontEnd):
     """
     Macro to see the Front End status.
 
@@ -335,10 +334,11 @@ class festatus(Macro):
     param_def = []
 
     def run(self, *args):
-        fe.fe_status()
+        self.init_fe()
+        self.fe_status()
 
 
-class feauto(Macro):
+class feauto(Macro, FrontEnd):
     """
     Macro to set the automatic opening of the Front End.
 
@@ -358,15 +358,16 @@ class feauto(Macro):
             msg = 'Wrong value. See the help for more information.'
             raise ValueError(msg)
 
+        self.init_fe()
         if active in TRUE_VALUES:
-            fe.fe_auto(True)
+            self.fe_auto(True)
         elif active in FALSE_VALUES:
-            fe.fe_auto(False)
+            self.fe_auto(False)
         else:
-            fe.fe_auto()
+            self.fe_auto()
 
 
-class fewait(Macro):
+class fewait(Macro, FrontEnd):
     """
     Macro to wait during the Front End is closed. It raise an exception if
     the automatic mode is off.
@@ -377,4 +378,5 @@ class fewait(Macro):
     param_def = []
 
     def run(self, *args):
-        fe.fe_wait()
+        self.init_fe()
+        self.fe_wait()
