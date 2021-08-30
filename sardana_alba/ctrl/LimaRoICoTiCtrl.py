@@ -147,17 +147,13 @@ class LimaRoICounterCtrl(CounterTimerController):
             return
 
         self._last_image_ready = self._limaroi.read_attribute(attr).value
-        if (self._last_image_ready < (self._repetitions - 1) and
-                self._last_image_ready != -2):
+        if self._last_image_ready < (self._repetitions - 1):
             self._state = State.Moving
             self._status = 'Taking data'
         else:
             self._state = State.On
             # self._clean_acquisition()
-            if self._last_image_ready == -2:
-                self._status = "Not images in buffer"
-            else:
-                self._status = "RoI computed"
+            self._status = "RoI computed"
 
     def StateOne(self, axis):
         self._log.debug('StateOne: [%s] %s' % (self._state, self._status))
