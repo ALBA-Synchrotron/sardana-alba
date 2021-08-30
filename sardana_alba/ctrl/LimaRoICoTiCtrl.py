@@ -212,6 +212,7 @@ class LimaRoICounterCtrl(CounterTimerController):
                 value = self._data_buff[axis]
         except Exception as e:
             self._log.error("ReadOne %r" % e)
+            raise Exception('Acquisition did not finish correctly.')
         self._log.debug("ReadOne return %r" % value)
         return int(value)
 
