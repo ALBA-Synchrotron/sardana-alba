@@ -1,5 +1,6 @@
 
 import PyTango
+from tango import DevState
 from sardana import State
 from sardana.pool.controller import Type, Access, Description, Memorize, \
     Memorized, CounterTimerController, DataAccess
@@ -84,7 +85,7 @@ class LimaRoICounterCtrl(CounterTimerController):
         self._repetitions = 0
         self._last_image_read = -1
         self._last_image_ready = -1
-        self._start = False
+
         self._synchronization = AcqSynch.SoftwareTrigger
         self._abort_flg = False
 
@@ -105,12 +106,10 @@ class LimaRoICounterCtrl(CounterTimerController):
             self._last_image_read = -1
             self._last_image_ready = -1
             self._repetitions = 0
-            self._start = False
             self._abort_flg = False
 
     def _recreate_rois(self):
-        state = self._limaroi.state()
-        if state == 'ON':
+        if self._limaroi.state() == DevState.ON:
             return
         self._limaroi.Start()
         for axis in list(self._rois.keys()):
@@ -147,19 +146,23 @@ class LimaRoICounterCtrl(CounterTimerController):
             return
 
         self._last_image_ready = self._limaroi.read_attribute(attr).value
+        
         if self._last_image_ready < (self._repetitions - 1):
             self._state = State.Moving
             self._status = 'Taking data'
-        else:
+            self._read = False
+        elif self._read:
             self._state = State.On
-            # self._clean_acquisition()
             self._status = "RoI computed"
+        else:
+            self._status = "Not images in buffer"
 
     def StateOne(self, axis):
         self._log.debug('StateOne: [%s] %s' % (self._state, self._status))
         return self._state, self._status
 
     def LoadOne(self, axis, value, repetitions, latency):
+        self._log.debug('LoadOne. val: {}, rep: {}, lat: {}, sinc: {}'.format(value, repetitions, latency, self._synchronization))
         self._clean_acquisition()
         if self._synchronization == AcqSynch.SoftwareTrigger:
             self._repetitions = 1
@@ -177,14 +180,18 @@ class LimaRoICounterCtrl(CounterTimerController):
         self._abort_flg = True
 
     def ReadAll(self):
-        self._log.debug("ReadAll: Entering")
+        self._log.debug("ReadAll: Entering. li_ready: {} li_read: {}".format(self._last_image_ready, self._last_image_read))
         for axis in list(self._data_buff.keys()):
             self._data_buff[axis] = []
-        if self._last_image_ready != self._last_image_read:
+        if self._last_image_ready > -1 and self._last_image_ready != self._last_image_read:
             if not self._synchronization == AcqSynch.SoftwareTrigger:
-                self._last_image_read += 1
+                self._last_image_read = self._last_image_ready
             rois_data = self._limaroi.readCounters(self._last_image_read)
-            self._last_image_ready = rois_data[-6]
+            
+            if rois_data.size:
+                self._last_image_ready = rois_data[-6]
+                self._read = True
+                
             for base_idx in range(0, len(rois_data), 7):
                 roi_id_idx = base_idx + self.IDX_ROI_ID
                 roi_id = rois_data[roi_id_idx]
@@ -194,8 +201,7 @@ class LimaRoICounterCtrl(CounterTimerController):
                     self._data_buff[axis] += [rois_data[sum_idx]]
             self._log.debug('Read images [%d, %d]' % (self._last_image_read,
                                                       self._last_image_ready))
-            if not self._synchronization == AcqSynch.SoftwareTrigger:
-                self._last_image_read = self._last_image_ready
+
         self._log.debug("ReadAll: Leaving")
 
     def ReadOne(self, axis):
@@ -212,7 +218,7 @@ class LimaRoICounterCtrl(CounterTimerController):
                 value = self._data_buff[axis]
         except Exception as e:
             self._log.error("ReadOne %r" % e)
-            raise Exception('Acquisition did not finish correctly.')
+            raise e
         self._log.debug("ReadOne return %r" % value)
         return int(value)
 
