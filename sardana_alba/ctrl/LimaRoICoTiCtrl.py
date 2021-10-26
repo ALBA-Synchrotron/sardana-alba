@@ -82,6 +82,7 @@ class LimaRoICounterCtrl(CounterTimerController):
         self._data_buff = {}
         self._state = None
         self._status = None
+        self._read = False
         self._repetitions = 0
         self._last_image_read = -1
         self._last_image_ready = -1
