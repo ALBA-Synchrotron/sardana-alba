@@ -148,7 +148,10 @@ class LimaRoICounterCtrl(CounterTimerController):
 
         self._last_image_ready = self._limaroi.read_attribute(attr).value
         
-        if self._last_image_ready < (self._repetitions - 1):
+        if self._last_image_ready == -2:
+            self._state = State.On
+            self._status = 'Initialized'
+        elif self._last_image_ready < (self._repetitions - 1):
             self._state = State.Moving
             self._status = 'Taking data'
             self._read = False
