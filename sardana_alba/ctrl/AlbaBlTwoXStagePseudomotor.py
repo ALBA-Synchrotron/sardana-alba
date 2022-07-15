@@ -21,7 +21,7 @@ class TwoXStageController(PseudoMotorController):
     pseudo_motor_roles = ('x', 'yaw')
     motor_roles = ('mx1', 'mx2')
 
-    class_prop = {
+    ctrl_properties = {
         'Tx1Coordinates':
             {Type: str,
              Description: 'tx1 coordination: x,y in local system'},
@@ -54,21 +54,21 @@ class TwoXStageController(PseudoMotorController):
                             'generate coordinates.')
             raise e
 
-    def calc_physical(self, index, pseudos):
-        return self.calc_all_physical(pseudos)[index - 1]
+    def CalcPhysical(self, axis, pseudo_pos, curr_physical_pos):
+        return self.CalcAllPhysical(pseudo_pos, curr_physical_pos)[axis - 1]
 
-    def calc_pseudo(self, index, physicals):
-        return self.calc_all_pseudo(physicals)[index - 1]
+    def CalcPseudo(self, axis, physical_pos, curr_pseudo_pos):
+        return self.CalcAllPseudo(physical_pos, curr_pseudo_pos)[axis - 1]
 
-    def calc_all_physical(self, pseudos):
-        x, yaw = pseudos
+    def CalcAllPhysical(self, pseudo_pos, curr_physical_pos):
+        x, yaw = pseudo_pos
         tanYaw = math.tan(yaw/1000)  # converts back to radians
         tx1 = -tanYaw * self.tx1[1] + x
         tx2 = -tanYaw * self.tx2[1] + x
         return tx1, tx2
 
-    def calc_all_pseudo(self, physicals):
-        tx1, tx2 = physicals
+    def CalcAllPseudo(self, physical_pos, curr_pseudo_pos):
+        tx1, tx2 = physical_pos
         x = tx1 - (tx2 - tx1) * self.tx1[1] / (self.tx2[1] - self.tx1[1])
         yaw = -math.atan((tx2 - tx1) / (self.tx2[1] - self.tx1[1]))
         yaw *= 1000  # conversion to mrad
