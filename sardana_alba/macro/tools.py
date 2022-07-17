@@ -280,7 +280,7 @@ class FrontEnd(object):
 
         if flg_warn:
             msg = ('You should check if you have permits from the controls '
-                   'room. You should check if the optical hatch is closed. '
+                   'room. You should check if the optical hutch is closed. '
                    'You should check if there are interlocks.')
             self.error(msg)
 
