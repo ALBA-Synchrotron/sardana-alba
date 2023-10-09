@@ -11,6 +11,7 @@ setup(
     license="GPLv3",
     url="http://github.com/ALBA-Synchrotron/sardana-alba",
     packages=find_packages(),
-    install_requires=["sardana", "tangoctl>=0.6"],
+    install_requires=["sardana"],
+    extras_require=["tangoctl>=0.6"],
     python_requires=">=3.5",
 )
