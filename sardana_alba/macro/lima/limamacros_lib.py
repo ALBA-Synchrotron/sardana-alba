@@ -26,6 +26,13 @@ def catch_error(meth):
     return _catch_error
 
 
+def get_lima_device(dev):
+    lima_dev = taurus.Device(dev)
+    if dev.lower() == 'rayonix':
+        # MSPD Rayonix problems See CS-25213
+        lima_dev.set_timeout_millis(30000)
+    return lima_dev
+
 
 class lima_status(Macro):
     """Returns device and acquisition status."""
@@ -36,7 +43,7 @@ class lima_status(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         state = '%s %s' % (lima.State(), 
                            lima.read_attribute('acq_status').value)
         return state
@@ -58,8 +65,9 @@ class lima_saving(Macro):
 
     @catch_error
     def run(self,dev,basedir,prefix,fileformat,auto,next):
-        lima = taurus.Device(dev)
-        lima.set_timeout_millis(30000)
+        lima = get_lima_device(dev)
+        if dev.lower() != 'rayonix':
+            lima.set_timeout_millis(30000)
 
 
         if auto:
@@ -101,7 +109,7 @@ Trigger modes are:
 
     @catch_error
     def run(self,dev,Texp,Tlat,NF,Trig):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.set_timeout_millis(30000)
 
         TrigList = ['INTERNAL_TRIGGER'
@@ -132,7 +140,7 @@ class lima_acquire(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.startAcq()
 
 
@@ -144,7 +152,7 @@ class lima_stop(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.stopAcq()
 
 
@@ -156,7 +164,7 @@ class lima_reset(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.reset()
 
 
@@ -173,7 +181,7 @@ Example:
 
     @catch_error
     def run(self,dev,header):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('saving_common_header', header.split("|"))
         
 
@@ -202,7 +210,7 @@ Example:
     def run(self,*args):
         dev = args[0]
         headers = args[1]
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('saving_header_delimiter', ['=','|',';'])
         lima.setImageHeader(headers)
         
@@ -216,7 +224,7 @@ class lima_write_image(Macro):
 
     @catch_error
     def run(self,dev,imageid):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.writeImage(imageid)
  
 
@@ -243,7 +251,7 @@ Parameter list:
 
     @catch_error
     def run(self,dev,param):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute(self.param_list[param]).value
         return str(value)
 
@@ -272,7 +280,7 @@ class lima_lastbuffer(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute("last_image_ready").value
         return value
      
@@ -286,7 +294,7 @@ class lima_lastimage(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute("saving_next_number").value - 1 
         return value 
      
@@ -300,7 +308,7 @@ class lima_nextimagefile(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute("saving_next_number").value
         dir = lima.read_attribute("saving_directory").value
         prefix = lima.read_attribute("saving_prefix").value
@@ -320,7 +328,7 @@ class lima_nextimage(Macro):
 
     @catch_error
     def run(self, dev, imgn):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('saving_next_number', imgn)
 
 
@@ -334,7 +342,7 @@ class lima_set_flip(Macro):
 
     @catch_error
     def run(self, dev, flipLR, flipUP):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('image_flip', [flipLR, flipUP])
        
 
@@ -348,7 +356,7 @@ class lima_get_flip(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute('image_flip').value
 
         return "%s %s" % (str(value[0]),str(value[1]))
@@ -366,7 +374,7 @@ class lima_set_bin(Macro):
 
     @catch_error
     def run(self, dev, binx, biny):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('image_bin', [binx, biny])
        
 
@@ -380,7 +388,7 @@ class lima_get_bin(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute('image_bin').value
 
         return "%s %s" % (str(value[0]),str(value[1]))
@@ -396,7 +404,7 @@ class lima_set_first_image(Macro):
 
     @catch_error
     def run(self, dev, first):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         lima.write_attribute('saving_next_number', first)
        
 
@@ -410,11 +418,10 @@ class lima_get_first_image(Macro):
 
     @catch_error
     def run(self,dev):
-        lima = taurus.Device(dev)
+        lima = get_lima_device(dev)
         value = lima.read_attribute('saving_next_number').value
 
         return value
-
 
 
 class lima_take(Macro):
